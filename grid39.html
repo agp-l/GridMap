@@ -246,11 +246,23 @@
     </div>
 
     <aside class="control-panel">
+  <aside class="control-panel">
         <div class="panel-header">
             <a href="index.html" class="logo">Grid<span>Map</span></a>
-            <a href="index.html" class="btn-back">← Back</a>
+            
+            <!-- NOVÉ MENU PRO JAZYKY -->
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <select id="langSelect" onchange="changeLanguage(this.value)" style="border-radius: 8px; border: 1px solid var(--border); padding: 4px 8px; font-size: 13px; font-family: var(--font); background: #ffffff; color: var(--text-primary); cursor: pointer; outline: none;">
+                    <option value="en">English</option>
+                    <option value="cs">Čeština</option>
+                    <option value="it">Italiano</option>
+                    <option value="es">Español</option>
+                    <option value="pt">Português</option>
+                    <option value="fr">Français</option>
+                </select>
+                <a href="index.html" class="btn-back">← Back</a>
+            </div>
         </div>
-
         <div class="panel-section">
             <div class="words-display waiting" id="welcomeBox">
                 <div class="label">Hierarchical Area</div>
@@ -310,8 +322,14 @@
     </aside>
 
     <script src="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.js"></script>
-   <!-- Nejprve načteme váš slovník -->
-    <script src="bip39.js"></script>
+
+<!-- NAČTENÍ VŠECH JAZYKŮ -->
+    <script src="bip39_en.js"></script>
+    <script src="bip39_cs.js"></script>
+    <script src="bip39_it.js"></script>
+    <script src="bip39_es.js"></script>
+    <script src="bip39_pt.js"></script>
+    <script src="french.js"></script>
     
     <!-- A pak spustíme hlavní logiku mapy -->
     <script src="logic_grid39.js"></script>
