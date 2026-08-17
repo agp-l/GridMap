@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GridMap - The 10m Word Address System</title>
+    <!-- PWA Manifest a barva prohlížeče -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2fd35a">
+
+    <!-- iOS podpora pro uložení na plochu -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="GridMap">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.css" rel="stylesheet" />
+
+    <style>
+        :root {
+            --bg: #ffffff;
+            --surface: rgba(255, 255, 255, 0.95);
+            --border: #e5e5e0;
+            --text-primary: #17171a;
+            --text-secondary: #52525b;
+            --accent: #2fd35a;
+            --accent-dark: #1f9c40;
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --font-display: 'Baloo 2', var(--font);
+            --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-primary);
+            font-family: var(--font);
+            -webkit-font-smoothing: antialiased;
+            overflow: hidden;
+        }
+
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; z-index: 0; cursor: crosshair; }
+
+        .control-panel {
+            position: absolute; top: 20px; left: 20px; z-index: 10;
+            width: 380px; max-height: calc(100vh - 40px);
+            overflow: visible; 
+            background: var(--surface); backdrop-filter: blur(12px);
+            border: 1px solid var(--border); border-radius: 24px;
+            padding: 24px; display: flex; flex-direction: column; gap: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .panel-header { display: flex; justify-content: space-between; align-items: center; }
+
+        .logo {
+            font-family: var(--font-display); font-size: 24px; font-weight: 800;
+            color: var(--text-primary); letter-spacing: -0.5px; text-decoration: none; line-height: 1;
+        }
+        .logo span { color: var(--accent); }
+
+        .btn-back {
+            font-size: 13px; font-weight: 600; color: var(--text-primary);
+            text-decoration: none; background: #f4f4f6; padding: 6px 12px;
+            border-radius: 999px; transition: 0.2s; border: 1px solid var(--border);
+        }
+        .btn-back:hover { background: #e5e5e8; }
+
+        .panel-section { display: flex; flex-direction: column; gap: 12px; }
+
+        .search-texts h3 {
+            font-family: var(--font-display); font-size: 1.3rem;
+            color: var(--text-primary); font-weight: 700; line-height: 1.2; margin: 0;
+        }
+        .search-texts p { font-size: 0.9rem; color: var(--text-secondary); margin: 4px 0 0 0; line-height: 1.4; }
+
+        .search-row { display: flex; gap: 8px; width: 100%; }
+
+        input[type="text"] {
+            flex: 1; min-width: 0; padding: 12px 16px; border-radius: 12px;
+            border: 1px solid var(--border); background: #ffffff; color: var(--text-primary);
+            font-family: var(--font-mono); font-size: 14px; transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        input[type="text"]:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(47, 211, 90, 0.15); }
+
+        .btn {
+            padding: 12px 20px; border-radius: 12px; font-size: 14px; font-weight: 600;
+            cursor: pointer; border: none; transition: all 0.2s; font-family: inherit;
+            display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap;
+        }
+        .btn-primary { background: var(--text-primary); color: #ffffff; }
+        .btn-primary:hover { background: var(--accent); color: #ffffff; }
+        .btn-outline { background: #f4f4f6; color: var(--text-primary); border: 1px solid var(--border); width: 100%; }
+        .btn-outline:hover { background: #e5e5e8; }
+
+        .words-display {
+            background: #ffffff; border: 1px solid var(--accent); border-radius: 16px;
+            padding: 20px 16px; text-align: center; cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s; overflow-wrap: anywhere; word-break: break-word;
+        }
+        .words-display:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(47, 211, 90, 0.15); }
+        .words-display.waiting { cursor: default; border-color: var(--border); box-shadow: none; background: #fafafa; }
+        .words-display.waiting:hover { transform: none; box-shadow: none; }
+
+        .words-display .label { font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.05em; }
+        .words-display .words { font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; color: var(--accent-dark); line-height: 1.1; }
+
+        .popup-words {
+            font-family: var(--font-display); font-size: 1.3rem; font-weight: 800;
+            color: var(--accent-dark); text-align: center; margin-top: 6px;
+            cursor: pointer; border-radius: 8px; transition: 0.2s; padding: 4px;
+            overflow-wrap: anywhere; word-break: break-word; line-height: 1.1;
+        }
+        .popup-gps { font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-secondary); text-align: center; margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--border); }
+
+        hr { border: none; border-top: 1px solid var(--border); margin: 0; }
+
+        /* ============================== */
+        /* ELEGANTNÍ LAYER MENU           */
+        /* ============================== */
+        .layer-control {
+            position: absolute; top: 20px; right: 20px; z-index: 20;
+        }
+        .layer-btn {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+            padding: 10px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: flex; align-items: center; justify-content: center; transition: 0.2s;
+            color: var(--text-primary);
+        }
+        .layer-btn:hover { background: #ffffff; }
+        
+        .layer-menu {
+            position: absolute; top: 100%; right: 0; margin-top: 8px;
+            background: var(--surface); backdrop-filter: blur(12px); border: 1px solid var(--border);
+            border-radius: 16px; padding: 8px; display: flex; flex-direction: column; gap: 4px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1); opacity: 0; visibility: hidden;
+            transition: 0.2s; min-width: 140px; transform: translateY(-10px);
+        }
+        .layer-control:hover .layer-menu {
+            opacity: 1; visibility: visible; transform: translateY(0);
+        }
+        
+        .layer-menu button {
+            background: transparent; border: none; text-align: left; padding: 8px 12px;
+            border-radius: 8px; font-family: var(--font); font-weight: 500; font-size: 13px;
+            color: var(--text-primary); cursor: pointer; transition: 0.2s;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .layer-menu button:hover { background: #ffffff; }
+        .layer-menu button.active { background: rgba(47, 211, 90, 0.15); color: var(--accent-dark); font-weight: 600; }
+
+        .mapboxgl-popup-content {
+            background: #ffffff; border-radius: 16px; padding: 16px; border: 1px solid var(--border);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1); font-family: var(--font); color: var(--text-primary); min-width: 200px;
+        }
+        .mapboxgl-popup-close-button { font-size: 1.2rem; padding: 2px 6px; color: var(--text-secondary); }
+
+        /* ============================== */
+        /* STYLY PRO NAŠEPTÁVAČ           */
+        /* ============================== */
+        .autocomplete-dropdown {
+            position: absolute; top: calc(100% + 8px); left: 0; right: 0;
+            background-color: #ffffff; border: 1px solid var(--border); border-radius: 12px;
+            z-index: 999; max-height: 220px; overflow-y: auto; box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+            display: none;
+        }
+
+        .autocomplete-dropdown::-webkit-scrollbar { width: 6px; }
+        .autocomplete-dropdown::-webkit-scrollbar-track { background: transparent; margin: 8px 0; }
+        .autocomplete-dropdown::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+        .autocomplete-dropdown::-webkit-scrollbar-thumb:hover { background-color: #94a3b8; }
+
+        .autocomplete-item {
+            padding: 12px 16px; cursor: pointer; font-family: var(--font-mono); font-size: 14px;
+            color: var(--text-primary); border-bottom: 1px solid var(--border); transition: background-color 0.2s;
+        }
+        .autocomplete-item strong { color: var(--accent-dark); }
+        .autocomplete-item:last-child { border-bottom: none; }
+        .autocomplete-item:hover { background-color: #f4f4f6; }
+
+
+        /* ============================== */
+        /* MOBILNÍ ZOBRAZENÍ              */
+        /* ============================== */
+        @media (max-width: 600px) {
+            .control-panel {
+                top: auto; bottom: 0; left: 0; width: 100%;
+                border-radius: 16px 16px 0 0; padding: 16px;
+                gap: 12px; box-shadow: 0 -5px 25px rgba(0, 0, 0, 0.15);
+                border-bottom: none; overflow: visible; 
+            }
+
+            .search-texts { display: none; }
+            #welcomeBox { display: none !important; }
+            hr { display: none; }
+
+            .logo { font-size: 20px; }
+            .btn-back { padding: 4px 10px; font-size: 12px; border-radius: 8px; }
+
+            .words-display { padding: 10px 12px; border-radius: 10px; }
+            .words-display .label { margin-bottom: 2px; font-size: 0.75rem; }
+            .words-display .words { font-size: 1.2rem; }
+
+            input[type="text"] { padding: 10px 14px; font-size: 14px; border-radius: 10px; }
+            .btn { padding: 10px 16px; font-size: 14px; border-radius: 10px; }
+            
+            .layer-control { top: 10px; right: 10px; }
+            .layer-btn { padding: 8px; }
+
+            .autocomplete-dropdown {
+                top: auto; bottom: calc(100% + 8px); max-height: 35vh; 
+                box-shadow: 0 -12px 30px rgba(0,0,0,0.15);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="map"></div>
+
+    <!-- Plovoucí, elegantní menu pro vrstvy mapy -->
+    <div class="layer-control">
+        <button class="layer-btn" title="Map Layers">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                <polyline points="2 12 12 17 22 12"></polyline>
+                <polyline points="2 17 12 22 22 17"></polyline>
+            </svg>
+        </button>
+        <div class="layer-menu">
+            <button id="btn-streets" onclick="setMapStyle('streets')">🗺️ Streets</button>
+            <button id="btn-outdoors" onclick="setMapStyle('outdoors')">🏕️ Outdoors</button>
+            <button id="btn-light" class="active" onclick="setMapStyle('light')">☀️ Light</button>
+            <button id="btn-dark" onclick="setMapStyle('dark')">🌑 Dark</button>
+            <button id="btn-satellite" onclick="setMapStyle('satellite')">🛰️ Satellite</button>
+        </div>
+    </div>
+
+    <aside class="control-panel">
+        <div class="panel-header">
+            <a href="index.html" class="logo">Grid<span>Map</span></a>
+            <a href="index.html" class="btn-back">← Back</a>
+        </div>
+
+        <div class="panel-section">
+            <div class="words-display waiting" id="welcomeBox">
+                <div class="label">Hierarchical Area</div>
+                <div class="words" style="opacity: 0.4;">tap.anywhere.on.map</div>
+            </div>
+
+            <div class="words-display" id="activeResultBox" onclick="copyResultWords()" style="display: none;">
+                <div class="label" id="areaLabel">This area is</div>
+                <div class="words" id="resultWords">...</div>
+            </div>
+        </div>
+
+        <hr>
+
+        <div class="panel-section">
+            <div class="search-texts">
+                <h3>Search location</h3>
+                <p>Enter 1 to 5 words or GPS.</p>
+            </div>
+
+           <div class="search-row">
+                <div style="position: relative; width: 100%;">
+                    <input type="text" id="universalInput" placeholder="Search 1-5 words or GPS..." style="width: 100%;"
+                        autocomplete="off">
+                    <div id="autocomplete-list" class="autocomplete-dropdown"></div>
+                </div>
+            </div>
+
+          <!-- Stávající tlačítka Search a Share -->
+            <div style="display: flex; gap: 8px; margin-top: 4px;">
+                <button class="btn btn-primary" onclick="searchUniversal()" style="flex: 1;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    Search
+                </button>
+                
+                <button class="btn btn-outline" id="shareBtn" onclick="shareLocation()" style="flex: 1; display: none;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="18" cy="5" r="3"></circle>
+                        <circle cx="6" cy="12" r="3"></circle>
+                        <circle cx="18" cy="19" r="3"></circle>
+                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                    </svg>
+                    Share
+                </button>
+            </div>
+
+            <!-- NOVÉ TLAČÍTKO PRO INSTALACI -->
+            <button class="btn btn-outline" id="installAppBtn" style="display: none; margin-top: 8px; border-color: var(--accent); color: var(--accent-dark); width: 100%;">
+                📱 Install App to Home Screen
+            </button>
+            
+        </div>
+    </aside>
+
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.js"></script>
+   <!-- Nejprve načteme váš slovník -->
+    <script src="bip39.js"></script>
+    
+    <!-- A pak spustíme hlavní logiku mapy -->
+    <script src="logic_grid39.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js');
+            });
+        }
+    </script>
+</body>
+
+</html>
