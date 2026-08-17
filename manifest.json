@@ -1,0 +1,16 @@
+{
+  "name": "GridMap Navigation",
+  "short_name": "GridMap",
+  "description": "The world addressed in simple words.",
+  "start_url": "/grid10.html",
+  "display": "standalone",
+  "background_color": "#17171a",
+  "theme_color": "#2fd35a",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
