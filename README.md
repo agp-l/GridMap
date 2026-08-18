@@ -1,4 +1,5 @@
-# GridMap > **🌐 Live Demo:** You can test the application directly in your browser without local setup at **[map.dobrodruzi.cz](https://map.dobrodruzi.cz/)**.
+# GridMap
+> **🌐 Live Demo:** You can test the application directly in your browser without local setup at **[map.dobrodruzi.cz](https://map.dobrodruzi.cz/)**.
 
 > **The world addressed in simple words.**
 
