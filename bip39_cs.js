@@ -1,4 +1,4 @@
-// bip39_czech.js
+// bip39_cs.js
 const bip39_cs = `abdikace
 abeceda
 adresa

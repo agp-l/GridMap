@@ -1,7 +1,7 @@
 mapboxgl.accessToken = "pk.eyJ1IjoiYWdwbCIsImEiOiJjbG1rY3lqdWswMWliMnJuenpndHpnMmh6In0.ZAg3F_H8uxL9jC5h8f41Iw";
 
 // ==========================================
-// 1. JÁDRO: MULTI-LANGUAGE GRID 39 
+// 1. JÁDRO: MULTI-LANGUAGE GRID 39  vs.5
 // ==========================================
 const Grid39 = {
     wordlists: {},   // Bude obsahovat: { en: [...], cs: [...], it: [...] }
@@ -13,6 +13,7 @@ const Grid39 = {
         if (typeof bip39_it !== 'undefined') this.wordlists['it'] = bip39_it.trim().split(/\r?\n/).map(w => w.trim()).filter(w => w.length > 0);
         if (typeof bip39_es !== 'undefined') this.wordlists['es'] = bip39_es.trim().split(/\r?\n/).map(w => w.trim()).filter(w => w.length > 0);
         if (typeof bip39_pt !== 'undefined') this.wordlists['pt'] = bip39_pt.trim().split(/\r?\n/).map(w => w.trim()).filter(w => w.length > 0);
+        if (typeof bip39_fr !== 'undefined') this.wordlists['fr'] = bip39_fr.trim().split(/\r?\n/).map(w => w.trim()).filter(w => w.length > 0);
         
         console.log(`Loaded languages: ${Object.keys(this.wordlists).join(', ')}`);
     },
@@ -107,7 +108,7 @@ const Grid39 = {
         if (idxs[0] >= this.DIV_L1 || idxs[1] >= this.DIV_L1) throw "Word out of bounds for Region layer.";
         if (depth >= 3 && idxs[2] >= (this.DIV_L2 * this.DIV_L2)) throw "Word out of bounds for Neighborhood layer.";
         if (depth >= 4 && idxs[3] >= (this.DIV_L3 * this.DIV_L3)) throw "Word out of bounds for 10m layer.";
-        if (depth === 5 && idxs[4] >= (this.DIV_L4 * this.DIV_L4)) throw "Word out of bounds for 1m PRO layer.";
+        if (depth === 5 && idxs[4] >= (this.DIV_L4 * this.DIV_L4)) throw "Word out of bounds for 1m layer.";
 
         let xMinIdx = 0, yMinIdx = 0;
         let xSpan = this.SIZE_L4, ySpan = this.SIZE_L4;
@@ -368,7 +369,7 @@ function showResult(wordsArray, centerLat, centerLon, bounds, depth) {
     if (depth === 2) { label = "19.8km Region"; zoomTarget = 10.5; }
     if (depth === 3) { label = "450m Neighborhood"; zoomTarget = 14; }
     if (depth === 4) { label = "10.0m Square"; zoomTarget = 19.5; }
-    if (depth === 5) { label = "1.0m PRO Square"; zoomTarget = 23; }
+    if (depth === 5) { label = "1.0m Square"; zoomTarget = 23; }
     
     document.getElementById('areaLabel').innerText = label;
     document.getElementById('resultWords').innerHTML = rawString;
@@ -504,6 +505,7 @@ inputEl.addEventListener("input", function() {
         return;
     }
 
+    // Omezení nápovědy podle toho, jaké slovo uživatel zadává (aby nevybral něco za hranicí mapy)
     let limit = 2048;
     if (currentWordIndex === 0 || currentWordIndex === 1) limit = Grid39.DIV_L1;
     else if (currentWordIndex === 2) limit = Grid39.DIV_L2 * Grid39.DIV_L2;      
@@ -511,14 +513,21 @@ inputEl.addEventListener("input", function() {
     else if (currentWordIndex === 4) limit = Grid39.DIV_L4 * Grid39.DIV_L4;      
 
     let matches = [];
-    // Hledá ve VŠECH načtených jazycích
+    
+    // 1. PRIORITA: Hledat nejprve v aktuálně vybraném jazyce!
+    if (Grid39.wordlists[Grid39.activeLang]) {
+        const activeWords = Grid39.wordlists[Grid39.activeLang].slice(0, limit);
+        matches.push(...activeWords.filter(w => w.startsWith(currentWord)));
+    }
+
+    // 2. ZÁLOHA: Hledat i ve všech ostatních jazycích (aby fungoval globální překlad)
     for (let lang in Grid39.wordlists) {
+        if (lang === Grid39.activeLang) continue; // Přeskočit aktuální, ten už máme
         const allowedWords = Grid39.wordlists[lang].slice(0, limit);
-        const langMatches = allowedWords.filter(w => w.startsWith(currentWord));
-        matches.push(...langMatches);
+        matches.push(...allowedWords.filter(w => w.startsWith(currentWord)));
     }
     
-    // Vyřadí případné duplicity a ořízne na 5
+    // Vyřadí případné duplicity a ořízne přesně na 5 nejlepších výsledků
     matches = [...new Set(matches)].slice(0, 5);
 
     if (matches.length > 0) {

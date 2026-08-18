@@ -2,7 +2,7 @@
   "name": "GridMap Navigation",
   "short_name": "GridMap",
   "description": "The world addressed in simple words.",
-"start_url": "/grid39.html?v=1.3",
+"start_url": "/grid39.html?v=1.4",
   "display": "standalone",
   "background_color": "#17171a",
   "theme_color": "#2fd35a",

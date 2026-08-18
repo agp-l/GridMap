@@ -1,4 +1,4 @@
-// bip39_french.js
+// bip39_fr.js
 const bip39_fr = `abaisser
 abandon
 abdiquer
