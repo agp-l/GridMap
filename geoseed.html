@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>BIP39 GeoSeed | Secure Offline Tool</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#2fd35a">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        /* Moderní světlý GridMap design */
+        :root {
+            --bg-body: #f4f4f6;
+            --bg-card: #ffffff;
+            --bg-input: #ffffff;
+            --text-main: #17171a;
+            --text-muted: #52525b;
+            --border-color: #e5e5e0;
+            --accent-primary: #2fd35a;
+            --accent-hover: #1f9c40;
+            --warning-bg: rgba(245, 158, 11, 0.08);
+            --warning-border: rgba(245, 158, 11, 0.3);
+            --warning-text: #b45309;
+            --danger-bg: rgba(239, 68, 68, 0.05);
+            --danger-border: rgba(239, 68, 68, 0.2);
+            --danger-text: #dc2626;
+            
+            --font: 'Inter', -apple-system, sans-serif;
+            --font-display: 'Baloo 2', var(--font);
+            --font-mono: 'IBM Plex Mono', monospace;
+        }
+
+        body { 
+            margin: 0; padding: 40px 20px; 
+            font-family: var(--font); 
+            background-color: var(--bg-body); 
+            color: var(--text-main); 
+            display: flex; flex-direction: column; align-items: center; line-height: 1.6;
+            background-image: radial-gradient(circle, rgba(23, 23, 26, 0.06) 1px, transparent 1px);
+            background-size: 28px 28px; background-position: center top;
+        }
+
+        .header { text-align: center; margin-bottom: 40px; width: 100%; max-width: 600px; }
+        .header h1 { 
+            font-family: var(--font-display); 
+            color: var(--text-main); font-size: 2.8rem; font-weight: 800; 
+            letter-spacing: -1px; margin: 0 0 8px 0; line-height: 1.1; 
+        }
+        .header h1 span { color: var(--accent-primary); }
+        .header p { color: var(--text-muted); margin: 0; font-size: 1.1rem; }
+
+        /* Security Protocol Box */
+        .security-protocol {
+            max-width: 600px; width: 100%; padding: 24px; margin-bottom: 30px;
+            background-color: var(--danger-bg); border: 1px solid var(--danger-border);
+            border-radius: 20px; box-sizing: border-box; text-align: left;
+        }
+        .security-protocol h3 { 
+            color: var(--danger-text); margin: 0 0 12px 0; font-size: 1.15rem; 
+            display: flex; align-items: center; gap: 8px; font-weight: 700;
+        }
+        .security-protocol ul { margin: 0; padding-left: 20px; color: var(--text-muted); font-size: 0.95rem; }
+        .security-protocol li { margin-bottom: 8px; }
+        .security-protocol strong { color: var(--text-main); font-weight: 600; }
+
+        /* Geographic Warning */
+        .geo-warning {
+            background-color: var(--warning-bg); border: 1px solid var(--warning-border);
+            border-radius: 12px; padding: 16px; margin-bottom: 24px; font-size: 0.9rem; color: var(--warning-text);
+        }
+
+        .download-actions { display: flex; gap: 12px; justify-content: center; margin-top: 24px; flex-wrap: wrap; }
+        .btn-download {
+            background-color: transparent; color: var(--text-main); border: 1px solid var(--border-color);
+            padding: 10px 20px; border-radius: 999px; text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: 0.2s;
+        }
+        .btn-download:hover { background-color: #e5e5e8; }
+
+        .card {
+            max-width: 600px; width: 100%; background-color: var(--bg-card); padding: 36px;
+            border-radius: 24px; border: 1px solid var(--border-color);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.05);
+            margin-bottom: 32px; box-sizing: border-box;
+        }
+        .card-title { 
+            font-family: var(--font-display); font-size: 1.6rem; font-weight: 700; 
+            color: var(--text-main); margin: 0 0 24px 0; display: flex; align-items: center; gap: 12px; line-height: 1;
+        }
+        .card-title .step-badge {
+            background-color: var(--accent-primary); color: #ffffff; width: 32px; height: 32px;
+            display: flex; align-items: center; justify-content: center; border-radius: 50%; 
+            font-family: var(--font); font-size: 1rem; font-weight: 700;
+        }
+
+        .input-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; color: var(--text-muted); font-size: 0.9rem; font-weight: 600; }
+
+        input[type="text"], textarea {
+            width: 100%; box-sizing: border-box; padding: 14px 16px; font-size: 1rem;
+            background-color: var(--bg-input); color: var(--text-main); border: 1px solid var(--border-color); 
+            border-radius: 12px; font-family: var(--font-mono); transition: 0.2s ease;
+        }
+        textarea { resize: vertical; min-height: 100px; }
+        input[type="text"]:focus, textarea:focus { outline: none; border-color: var(--accent-primary); box-shadow: 0 0 0 3px rgba(47, 211, 90, 0.15); }
+        input[type="text"]::placeholder, textarea::placeholder { color: #a1a1aa; }
+
+        .btn-primary {
+            width: 100%; padding: 14px; font-size: 1rem; font-family: var(--font); font-weight: 600; 
+            background-color: var(--text-main); color: #ffffff; border: none; border-radius: 12px; cursor: pointer; transition: 0.2s ease;
+        }
+        .btn-primary:hover { background-color: var(--accent-primary); }
+        
+        .btn-secondary {
+            background-color: #f4f4f6; color: var(--text-main); font-size: 0.9rem; padding: 12px; margin-top: 10px;
+            border: 1px solid var(--border-color); border-radius: 10px; cursor: pointer; font-weight: 600; transition: 0.2s; width: 100%;
+        }
+        .btn-secondary:hover { background-color: #e5e5e8; }
+
+        .result-box {
+            margin-top: 24px; padding: 20px; background-color: #fafafa; border: 1px solid var(--border-color); 
+            border-radius: 12px; text-align: center; font-size: 1.125rem; min-height: 28px; word-break: break-word; color: var(--text-main);
+        }
+        .result-box:empty { display: none; }
+
+        .seed-table { width: 100%; border-collapse: collapse; margin-top: 10px; background: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color); }
+        .seed-table td, .seed-table th { padding: 12px 16px; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; text-align: left; }
+        .seed-table th { background: #f4f4f6; color: var(--text-muted); font-weight: 600; }
+        .seed-table td { color: var(--text-main); font-family: var(--font-mono); }
+        .seed-table tr:last-child td { border-bottom: none; }
+        .seed-table td.words-col { color: var(--accent-hover); font-weight: 600; font-family: var(--font-display); font-size: 1.1rem; }
+        .seed-table td.actions-col { text-align: center; width: 40px; }
+        
+        .btn-remove { background: none; border: none; color: var(--danger-text); cursor: pointer; font-size: 1.4rem; padding: 0; line-height: 1; transition: 0.2s; }
+        .btn-remove:hover { transform: scale(1.2); }
+
+        .map-link-inline { 
+            display: inline-block; margin-top: 4px; color: var(--text-main); background: #f4f4f6;
+            text-decoration: none; font-size: 0.75rem; font-family: var(--font); font-weight: 600;
+            padding: 2px 8px; border-radius: 6px; border: 1px solid var(--border-color); transition: 0.2s;
+        }
+        .map-link-inline:hover { background: var(--accent-primary); color: #ffffff; border-color: var(--accent-primary); }
+
+        @media (max-width: 600px) {
+            body { padding: 20px 10px; }
+            .card { padding: 24px 20px; border-radius: 20px; }
+            .seed-table td, .seed-table th { padding: 10px; font-size: 0.8rem; }
+            .seed-table td.words-col { font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>BIP39 <span>GeoSeed</span></h1>
+        <p>Air-Gapped Toolsuite</p>
+
+        <div class="download-actions">
+            <a href="geoseed.html" download="geoseed.html" class="btn-download">Download Tool (.html)</a>
+            <a href="bip39_en.js" download="bip39_en.js" class="btn-download">Download Wordlist (.js)</a>
+        </div>
+    </div>
+
+    <div class="security-protocol">
+        <h3>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="m9 12 2 2 4-4"></path></svg>
+            OpSec Protocol Guidelines
+        </h3>
+        <ul>
+            <li><strong>Environment:</strong> Run this tool entirely offline. Do not connect to the internet.</li>
+            <li><strong>Mobile Usage:</strong> Do not use standard operating systems. It is highly recommended to use a hardened OS like <strong>GrapheneOS</strong> for executing this securely on mobile devices.</li>
+            <li><strong>Desktop Usage:</strong> Boot an ephemeral operating system (e.g., Tails OS, Live Ubuntu) from a USB flash drive. Delete the environment completely after seed generation.</li>
+            <li><strong>Geographic Entropy:</strong> Do NOT choose locations close to each other. Locations must be globally distributed to maximize cryptographic entropy.</li>
+            <li><strong>Passphrase (BIP39 Extension):</strong> If your chosen locations share any geographical proximity, you MUST secure your hardware wallet with a strong Passphrase (at least <strong>13 completely random characters</strong> or <strong>7 random words</strong>).</li>
+        </ul>
+    </div>
+
+    <script src="bip39_en.js"></script>
+
+    <div class="card">
+        <h2 class="card-title"><span class="step-badge">1</span> Single: GPS to Words</h2>
+        <div class="input-group">
+            <label for="gpsInput">Coordinates (any format)</label>
+            <input type="text" id="gpsInput" placeholder="e.g. 49.0887, 16.7303 or 49.654N, 17.718E">
+        </div>
+        <button class="btn-primary" onclick="calcWords()">Generate 4 words</button>
+        <div class="result-box" id="wordsOutput"></div>
+    </div>
+
+    <div class="card">
+        <h2 class="card-title"><span class="step-badge">2</span> Single: Words to GPS</h2>
+        <div class="input-group">
+            <label for="wordsInput">BIP39 words (4 words only, space separated)</label>
+            <input type="text" id="wordsInput" placeholder="e.g. abandon ability able about">
+        </div>
+        <button class="btn-primary" onclick="calcCoords()">Get coordinates</button>
+        <div class="result-box" id="coordsOutput"></div>
+    </div>
+
+    <div class="card">
+        <h2 class="card-title"><span class="step-badge">3</span> Build Full Seed</h2>
+        
+        <div class="geo-warning">
+            <strong>Security Warning:</strong> Ensure your selected coordinates are geographically distant. Clustering points drastically reduces the seed's randomness.
+        </div>
+        <div class="input-group">
+            <label for="buildGpsInput">Add GPS coordinates to your seed sequence:</label>
+            <input type="text" id="buildGpsInput" placeholder="Enter GPS coordinates">
+            <button class="btn-secondary" onclick="addGpsToSeed()">Add to Sequence</button>
+        </div>
+        
+        <div id="seedBuilderContainer" style="display: none;">
+            <table class="seed-table" id="buildTable">
+                <thead>
+                    <tr><th>#</th><th>Words</th><th>Coordinates</th><th></th></tr>
+                </thead>
+                <tbody id="buildTableBody"></tbody>
+            </table>
+            
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button class="btn-secondary" onclick="clearSeedBuilder()" style="margin-top:0; border-color: var(--danger-border); color: var(--danger-text);">Clear All</button>
+                <button class="btn-primary" onclick="copyBuiltSeed()" style="margin-top:0;">Copy Seed</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2 class="card-title"><span class="step-badge">4</span> View Full Seed</h2>
+        <div class="input-group">
+            <label for="viewSeedInput">Paste complete sequence (12, 16, 20 or 24 words):</label>
+            <textarea id="viewSeedInput" placeholder="abandon ability able about abstract..."></textarea>
+        </div>
+        <button class="btn-primary" onclick="viewFullSeed()">Analyze Sequence</button>
+        
+        <div id="viewSeedContainer" style="display: none; margin-top: 20px;">
+            <table class="seed-table">
+                <thead>
+                    <tr><th>#</th><th>Words (Chunk of 4)</th><th>Coordinates & Map</th></tr>
+                </thead>
+                <tbody id="viewTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // GRID39 HYBRID MATH LOGIC (Zabudováno přímo)
+        // ==========================================
+        const Grid39 = {
+            wordlist: [],
+            R: 6378137.0,
+            get MAX_EXTENT() { return Math.PI * this.R; },
+            
+            DIV_L1: 2024, DIV_L2: 44, DIV_L3: 45, DIV_L4: 10,
+            get SIZE_L4() { return this.DIV_L1 * this.DIV_L2 * this.DIV_L3 * this.DIV_L4; },
+
+            lonLatToXY: function(lon, lat) {
+                let safeLat = Math.max(Math.min(lat, 85.05112877980659), -85.05112877980659);
+                let x = lon * (this.MAX_EXTENT / 180.0);
+                let y = Math.log(Math.tan((90 + safeLat) * Math.PI / 360.0)) * this.R;
+                return { x, y };
+            },
+
+            xyToLonLat: function(x, y) {
+                let lon = (x / this.MAX_EXTENT) * 180.0;
+                let lat = (2 * Math.atan(Math.exp(y / this.R)) - Math.PI / 2) * (180.0 / Math.PI);
+                return { lon, lat };
+            },
+
+            encode: function(lat, lon) {
+                if (this.wordlist.length < 2048) throw `Wordlist not fully loaded.`;
+                let { x, y } = this.lonLatToXY(lon, lat);
+                let xFrac = (x + this.MAX_EXTENT) / (2 * this.MAX_EXTENT);
+                let yFrac = (y + this.MAX_EXTENT) / (2 * this.MAX_EXTENT);
+
+                let maxIdx = this.SIZE_L4;
+                let xIndex = Math.min(Math.floor(xFrac * maxIdx), maxIdx - 1);
+                let yIndex = Math.min(Math.floor(yFrac * maxIdx), maxIdx - 1);
+
+                let div_block = this.DIV_L2 * this.DIV_L3 * this.DIV_L4; 
+
+                let x0 = Math.floor(xIndex / div_block);
+                let y0 = Math.floor(yIndex / div_block);
+                let remX1 = xIndex % div_block;
+                let remY1 = yIndex % div_block;
+
+                let x1 = Math.floor(remX1 / (this.DIV_L3 * this.DIV_L4));
+                let y1 = Math.floor(remY1 / (this.DIV_L3 * this.DIV_L4));
+                let word3_idx = y1 * this.DIV_L2 + x1; 
+
+                let remX2 = remX1 % (this.DIV_L3 * this.DIV_L4);
+                let remY2 = remY1 % (this.DIV_L3 * this.DIV_L4);
+
+                let x2 = Math.floor(remX2 / this.DIV_L4);
+                let y2 = Math.floor(remY2 / this.DIV_L4);
+                let word4_idx = y2 * this.DIV_L3 + x2; 
+
+                return [
+                    this.wordlist[x0],
+                    this.wordlist[y0],
+                    this.wordlist[word3_idx],
+                    this.wordlist[word4_idx]
+                ];
+            },
+
+            decode: function(wordsArray) {
+                if (this.wordlist.length < 2048) throw `Wordlist not fully loaded.`;
+                let idxs = wordsArray.map(w => this.wordlist.indexOf(w.toLowerCase()));
+                if (idxs.includes(-1)) throw "Invalid word in the address.";
+                if (idxs.length !== 4) throw "Please enter exactly 4 words.";
+
+                if (idxs[0] >= this.DIV_L1 || idxs[1] >= this.DIV_L1) throw "Word out of bounds for Region layer.";
+                if (idxs[2] >= (this.DIV_L2 * this.DIV_L2)) throw "Word out of bounds for Neighborhood layer.";
+                if (idxs[3] >= (this.DIV_L3 * this.DIV_L3)) throw "Word out of bounds for 10m layer.";
+
+                let xMinIdx = 0, yMinIdx = 0;
+                let xSpan = this.DIV_L4, ySpan = this.DIV_L4; // Because we stop at level 3, the span is L4
+
+                xMinIdx += idxs[0] * (this.DIV_L2 * this.DIV_L3 * this.DIV_L4);
+                yMinIdx += idxs[1] * (this.DIV_L2 * this.DIV_L3 * this.DIV_L4);
+
+                let x1 = idxs[2] % this.DIV_L2;
+                let y1 = Math.floor(idxs[2] / this.DIV_L2);
+                xMinIdx += x1 * (this.DIV_L3 * this.DIV_L4);
+                yMinIdx += y1 * (this.DIV_L3 * this.DIV_L4);
+
+                let x2 = idxs[3] % this.DIV_L3;
+                let y2 = Math.floor(idxs[3] / this.DIV_L3);
+                xMinIdx += x2 * this.DIV_L4;
+                yMinIdx += y2 * this.DIV_L4;
+
+                const cellSize = (this.MAX_EXTENT * 2) / this.SIZE_L4;
+                let xMin = -this.MAX_EXTENT + (xMinIdx * cellSize);
+                let xMax = -this.MAX_EXTENT + ((xMinIdx + xSpan) * cellSize);
+                let yMin = -this.MAX_EXTENT + (yMinIdx * cellSize);
+                let yMax = -this.MAX_EXTENT + ((yMinIdx + ySpan) * cellSize);
+
+                let center = this.xyToLonLat((xMin + xMax) / 2, (yMin + yMax) / 2);
+                return { lat: center.lat, lon: center.lon };
+            }
+        };
+
+        // Initialize Wordlist intelligently
+        window.addEventListener("DOMContentLoaded", () => {
+            let textSource = null;
+            if (typeof bip39_en !== 'undefined') textSource = bip39_en;
+            else if (typeof bip39_cs !== 'undefined') textSource = bip39_cs;
+            else if (typeof bip39_raw_text !== 'undefined') textSource = bip39_raw_text;
+            
+            if (textSource) {
+                Grid39.wordlist = textSource.trim().split(/\r?\n/).map(w => w.trim()).filter(w => w.length > 0);
+            } else if (typeof bip39_wordlist !== 'undefined' && Array.isArray(bip39_wordlist)) {
+                Grid39.wordlist = bip39_wordlist;
+            }
+        });
+
+        function parseGpsInput(input) {
+            let lat, lon;
+            const dmsRegex = /([-+]?\d+)[°\s]+(\d+)['\s]+([\d.]+)["\s]*([NSns])?[,\s;]+([-+]?\d+)[°\s]+(\d+)['\s]+([\d.]+)["\s]*([EWewO])?/;
+            const decRegex = /([-+]?\d{1,3}(?:\.\d+)?)\s*[°]*\s*([NSns])?[,\s;]+([-+]?\d{1,3}(?:\.\d+)?)\s*[°]*\s*([EWOewo])?/;
+            
+            const dmsMatch = input.match(dmsRegex);
+            if (dmsMatch) {
+                lat = parseFloat(dmsMatch[1]) + (parseFloat(dmsMatch[2]) / 60) + (parseFloat(dmsMatch[3]) / 3600);
+                if (dmsMatch[4] && dmsMatch[4].toUpperCase() === 'S') lat = -lat;
+                lon = parseFloat(dmsMatch[5]) + (parseFloat(dmsMatch[6]) / 60) + (parseFloat(dmsMatch[7]) / 3600);
+                if (dmsMatch[8] && (dmsMatch[8].toUpperCase() === 'W' || dmsMatch[8].toUpperCase() === 'O')) lon = -lon;
+                return {lat, lon};
+            } 
+            
+            const decMatch = input.match(decRegex);
+            if (decMatch) {
+                lat = parseFloat(decMatch[1]);
+                if (decMatch[2] && decMatch[2].toUpperCase() === 'S') lat = -lat;
+                lon = parseFloat(decMatch[3]);
+                if (decMatch[4] && (decMatch[4].toUpperCase() === 'W' || decMatch[4].toUpperCase() === 'O')) lon = -lon;
+                return {lat, lon};
+            }
+            return null;
+        }
+
+        function checkWordlist() {
+            if (Grid39.wordlist.length !== 2048) {
+                alert("Error: BIP39 wordlist is missing or does not contain exactly 2048 words.");
+                return false;
+            }
+            return true;
+        }
+
+        function calcWords() {
+            if (!checkWordlist()) return;
+            let input = document.getElementById("gpsInput").value.trim();
+            let out = document.getElementById("wordsOutput");
+            
+            let coords = parseGpsInput(input);
+            if (!coords) {
+                out.style.display = "block";
+                out.innerHTML = "<span style='color: var(--danger-text);'>Could not recognize coordinates.</span>";
+                return;
+            }
+
+            let words = Grid39.encode(coords.lat, coords.lon);
+            out.style.display = "block";
+            out.innerHTML = `
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 5px; font-family: var(--font);">Recognized: Lat: ${coords.lat.toFixed(5)}, Lon: ${coords.lon.toFixed(5)}</div>
+                <div style="font-size: 1.6rem; color: var(--accent-dark); font-weight: 800; font-family: var(--font-display); letter-spacing: -0.5px;">${words.join(" ")}</div>
+            `;
+        }
+
+        function calcCoords() {
+            if (!checkWordlist()) return;
+            let input = document.getElementById("wordsInput").value.trim().toLowerCase();
+            let out = document.getElementById("coordsOutput");
+            let words = input.split(/\s+/);
+
+            if (words.length !== 4) {
+                out.style.display = "block";
+                out.innerHTML = "<span style='color: var(--danger-text);'>Enter exactly 4 words.</span>";
+                return;
+            }
+
+            try {
+                let coords = Grid39.decode(words);
+                let urlGeoSeed = `grid39.html#${words.join("-")}`;
+
+                out.style.display = "block";
+                out.innerHTML = `
+                    <div style="color: var(--accent-hover); font-size: 0.95rem; margin-bottom: 5px; font-weight: 700; font-family: var(--font);">Location successfully found</div>
+                    <div style="font-family: var(--font-mono); font-size: 1.25rem; font-weight: 500; margin: 10px 0;">
+                        Lat: ${coords.lat.toFixed(6)}<br>Lon: ${coords.lon.toFixed(6)}
+                    </div>
+                    <a href="${urlGeoSeed}" target="_blank" class="map-link-inline" style="font-size: 0.9rem; padding: 4px 12px;">View on GridMap</a>
+                `;
+            } catch (e) {
+                out.style.display = "block";
+                out.innerHTML = `<span style='color: var(--danger-text);'>${e}</span>`;
+            }
+        }
+
+        let builtSequence = [];
+
+        function addGpsToSeed() {
+            if (!checkWordlist()) return;
+            let inputEl = document.getElementById("buildGpsInput");
+            let coords = parseGpsInput(inputEl.value.trim());
+            
+            if (!coords) { alert("Invalid GPS format."); return; }
+
+            let words = Grid39.encode(coords.lat, coords.lon);
+            builtSequence.push({ coords: coords, words: words });
+            
+            inputEl.value = "";
+            renderBuildTable();
+        }
+
+        function removeSequenceItem(index) {
+            builtSequence.splice(index, 1);
+            renderBuildTable();
+        }
+
+        function clearSeedBuilder() {
+            builtSequence = [];
+            renderBuildTable();
+        }
+
+        function copyBuiltSeed() {
+            if (builtSequence.length === 0) return;
+            let fullSeedArray = [];
+            builtSequence.forEach(item => fullSeedArray.push(...item.words));
+            navigator.clipboard.writeText(fullSeedArray.join(" ")).then(() => {
+                alert("Entire seed copied to clipboard!");
+            });
+        }
+
+        function renderBuildTable() {
+            const container = document.getElementById("seedBuilderContainer");
+            const tbody = document.getElementById("buildTableBody");
+            
+            if (builtSequence.length === 0) {
+                container.style.display = "none";
+                return;
+            }
+
+            container.style.display = "block";
+            let html = "";
+            
+            builtSequence.forEach((item, index) => {
+                html += `
+                    <tr>
+                        <td style="font-weight: 600; font-family: var(--font); color: var(--text-muted);">${index + 1}</td>
+                        <td class="words-col">${item.words.join(" ")}</td>
+                        <td style="font-size: 0.85rem;">${item.coords.lat.toFixed(5)},<br>${item.coords.lon.toFixed(5)}</td>
+                        <td class="actions-col"><button class="btn-remove" onclick="removeSequenceItem(${index})" title="Remove item">×</button></td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function viewFullSeed() {
+            if (!checkWordlist()) return;
+            const input = document.getElementById("viewSeedInput").value.trim().toLowerCase();
+            const container = document.getElementById("viewSeedContainer");
+            const tbody = document.getElementById("viewTableBody");
+            
+            if(!input) { container.style.display = "none"; return; }
+            const wordsArray = input.split(/\s+/);
+            
+            if (wordsArray.length < 4 || wordsArray.length % 4 !== 0) {
+                alert("Seed length must be a multiple of 4 (e.g., 12, 16, 24 words).");
+                container.style.display = "none";
+                return;
+            }
+
+            let html = "";
+            for(let i=0; i < wordsArray.length; i+=4) {
+                let chunk = wordsArray.slice(i, i+4);
+                try {
+                    let coords = Grid39.decode(chunk);
+                    let urlGeoSeed = `grid39.html#${chunk.join("-")}`;
+
+                    html += `
+                        <tr>
+                            <td style="font-weight: 600; font-family: var(--font); color: var(--text-muted);">${(i/4)+1}</td>
+                            <td class="words-col">${chunk.join(" ")}</td>
+                            <td style="font-size: 0.85rem;">
+                                ${coords.lat.toFixed(5)}, ${coords.lon.toFixed(5)}<br>
+                                <a href="${urlGeoSeed}" target="_blank" class="map-link-inline">Show Map</a>
+                            </td>
+                        </tr>
+                    `;
+                } catch (e) {
+                    alert(`Error: ${e} (Check sequence: "${chunk.join(' ')}")`);
+                    container.style.display = "none";
+                    return;
+                }
+            }
+            
+            tbody.innerHTML = html;
+            container.style.display = "block";
+        }
+    </script>
+</body>
+</html>
