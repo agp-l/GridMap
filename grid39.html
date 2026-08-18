@@ -23,6 +23,12 @@
         rel="stylesheet">
     <link href="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.css" rel="stylesheet" />
 
+
+    <!-- Zákaz ukládání do mezipaměti -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
     <style>
         :root {
             --bg: #ffffff;
@@ -324,15 +330,15 @@
     <script src="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.js"></script>
 
 <!-- NAČTENÍ VŠECH JAZYKŮ -->
-    <script src="bip39_en.js"></script>
-    <script src="bip39_cs.js"></script>
-    <script src="bip39_it.js"></script>
-    <script src="bip39_es.js"></script>
-    <script src="bip39_pt.js"></script>
-    <script src="french.js"></script>
+    <script src="bip39_en.js?v=1.3"></script>
+    <script src="bip39_cs.js?v=1.3"></script>
+    <script src="bip39_it.js?v=1.3"></script>
+    <script src="bip39_es.js?v=1.3"></script>
+    <script src="bip39_pt.js?v=1.3"></script>
+    <script src="bip39_fr.js?v=1.3"></script>
     
     <!-- A pak spustíme hlavní logiku mapy -->
-    <script src="logic_grid39.js"></script>
+    <script src="logic_grid39.js?v=1.3"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

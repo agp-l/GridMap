@@ -1,9 +1,9 @@
-const CACHE_NAME = 'gridmap-cache-v2';
+const CACHE_NAME = 'gridmap-cache-v3';
 const urlsToCache = [
   '/',
   '/index.html',
   '/grid39.html',
-  '/logic_grid39.js',
+  '/logic_grid39.js?v=1.3',
   '/wordlist.json'
 ];
 
