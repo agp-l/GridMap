@@ -14,7 +14,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="GridMap">
-    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="apple-touch-icon" href="assets/icon-192.png">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -629,15 +629,18 @@
     <script src="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.js"></script>
 
     <!-- NAČTENÍ VŠECH JAZYKŮ -->
-    <script src="bip39_en.js"></script>
-    <script src="bip39_cs.js"></script>
-    <script src="bip39_it.js"></script>
-    <script src="bip39_es.js"></script>
-    <script src="bip39_pt.js"></script>
-    <script src="bip39_fr.js"></script>
+    <!-- NAČTENÍ VŠECH JAZYKŮ -->
+    <script src="bip39/bip39_en.js?v=1.5"></script>
+    <script src="bip39/bip39_cs.js?v=1.5"></script>
+    <script src="bip39/bip39_it.js?v=1.5"></script>
+    <script src="bip39/bip39_es.js?v=1.5"></script>
+    <script src="bip39/bip39_pt.js?v=1.5"></script>
+    <script src="bip39/bip39_fr.js?v=1.5"></script>
 
-    <!-- A pak spustíme hlavní logiku mapy -->
-    <script src="logic_grid39.js"></script>
+    <!-- Hlavní logika -->
+    <script src="js/logic_grid39.js?v=1.5"></script>
+
+
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

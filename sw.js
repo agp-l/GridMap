@@ -1,13 +1,19 @@
-const CACHE_NAME = 'gridmap-cache-v4';
+const CACHE_NAME = 'gridmap-cache-v6'; // Posunuto na v6
+
+// POZOR: Používáme relativní cesty (s tečkou na začátku)!
+// Zároveň jsme smazali starý wordlist.json a dali sem nové slovníky
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/grid39.html',
-  '/logic_grid39.js?v=1.4',
-  '/wordlist.json'
+  './',
+  './index.html',
+  './grid39.html',
+  './js/logic_grid39.js?v=1.5',
+  './bip39/bip39_en.js?v=1.5',
+  './bip39/bip39_cs.js?v=1.5',
+  './assets/favicon.ico',
+  './assets/icon-192.png'
 ];
 
-// Při instalaci aplikace se soubory uloží do paměti telefonu
+// 1. Instalace - uložení do paměti
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -15,14 +21,31 @@ self.addEventListener('install', event => {
         return cache.addAll(urlsToCache);
       })
   );
+  self.skipWaiting(); // Vynutí okamžitou aktualizaci u uživatelů
 });
 
-// Při každém spuštění se aplikace pokusí načíst data z paměti
+// 2. MAGICKÝ KROK: Při aktivaci nové verze SMAŽE starou cache
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          if (cacheName !== CACHE_NAME) {
+            console.log('Deleting old cache:', cacheName);
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+  self.clients.claim(); // Ihned převezme kontrolu
+});
+
+// 3. Načítání z paměti nebo z internetu
 self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request)
       .then(response => {
-        // Pokud je soubor v paměti, vrať ho, jinak ho stáhni z internetu
         return response || fetch(event.request);
       })
   );
